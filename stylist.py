@@ -1,63 +1,97 @@
 import csv
 import random
 
-# Function to load the wardrobe from the CSV file
+# --- RULE ENGINE ---
+# Define basic color compatibility rules using ColorFamily.
+# This is the "brain" of our stylist.
+COLOR_RULES = {
+    'Neutral': ['Neutral', 'Blue', 'Bold', 'Brown'],
+    'Blue': ['Neutral', 'Brown'],
+    'Brown': ['Neutral', 'Blue'],
+    'Bold': ['Neutral'] # Bold colors (like red) pair best with neutrals.
+}
+
+def is_color_compatible(shirt, pants, shoes):
+    """Checks if the color combination of an outfit is valid based on rules."""
+    shirt_color = shirt['ColorFamily']
+    pants_color = pants['ColorFamily']
+    shoes_color = shoes['ColorFamily']
+
+    # Rule 1: Pants color must be compatible with shirt color.
+    if pants_color not in COLOR_RULES.get(shirt_color, []):
+        return False
+        
+    # Rule 2: Shoes should match the pants or be neutral.
+    # A classic rule: avoid black pants with brown shoes for formal wear.
+    if pants_color == 'Neutral' and pants['Color'] == 'Black' and shoes_color == 'Brown':
+        if shirt['Style'] == 'Formal': # This rule is stricter for formal wear
+            return False
+
+    # Rule 3: General shoe compatibility
+    if shoes_color not in COLOR_RULES.get(pants_color, []):
+        return False
+        
+    return True
+
+# --- FILE HANDLING & ITEM SEARCH ---
 def load_wardrobe(filename="wardrobe.csv"):
-    wardrobe = []
-    with open(filename, mode='r') as file:
-        csv_reader = csv.DictReader(file)
-        for row in csv_reader:
-            wardrobe.append(row)
-    return wardrobe
+    """Loads wardrobe data from the specified CSV file."""
+    try:
+        with open(filename, mode='r', encoding='utf-8') as file:
+            return list(csv.DictReader(file))
+    except FileNotFoundError:
+        print(f"Error: The file {filename} was not found.")
+        return []
 
-# Function to get suitable items based on context
 def find_items(wardrobe, occasion, weather):
-    suitable_shirts = []
-    suitable_pants = []
-    suitable_shoes = []
-    suitable_tops = [] # For jackets, sweaters, etc.
-
-    for item in wardrobe:
-        # Basic rule: Style must match the occasion
-        if item['Style'] == occasion:
-            # Weather check
-            is_weather_ok = (item['Weather'] == weather or item['Weather'] == 'All')
-
-            if is_weather_ok:
-                if item['Type'] == 'Shirt':
-                    suitable_shirts.append(item)
-                elif item['Type'] == 'Pants':
-                    suitable_pants.append(item)
-                elif item['Type'] == 'Shoes':
-                    suitable_shoes.append(item)
-                elif item['Type'] == 'Top' and weather == 'Cold': # Only suggest tops if it's cold
-                    suitable_tops.append(item)
+    """Filters items from the wardrobe based on occasion and weather."""
+    # Using dictionary comprehension for a cleaner look
+    filters = {'Style': occasion}
     
-    return suitable_shirts, suitable_pants, suitable_shoes, suitable_tops
+    items = {
+        'shirts': [item for item in wardrobe if item['Type'] == 'Shirt' and all(item[k] == v for k, v in filters.items()) and (item['Weather'] == weather or item['Weather'] == 'All')],
+        'pants': [item for item in wardrobe if item['Type'] == 'Pants' and all(item[k] == v for k, v in filters.items()) and (item['Weather'] == weather or item['Weather'] == 'All')],
+        'shoes': [item for item in wardrobe if item['Type'] == 'Shoes' and all(item[k] == v for k, v in filters.items()) and (item['Weather'] == weather or item['Weather'] == 'All')],
+        'tops': [item for item in wardrobe if item['Type'] == 'Top' and all(item[k] == v for k, v in filters.items()) and weather == 'Cold']
+    }
+    return items
 
-# --- Main Program ---
+def find_outfit(items):
+    """Tries to find a color-compatible outfit combination."""
+    # Shuffle lists to get different results each time
+    random.shuffle(items['shirts'])
+    random.shuffle(items['pants'])
+    random.shuffle(items['shoes'])
+
+    # Iterate through possible combinations to find a match
+    for shirt in items['shirts']:
+        for pant in items['pants']:
+            for shoe in items['shoes']:
+                if is_color_compatible(shirt, pant, shoe):
+                    # Found a good match!
+                    top = random.choice(items['tops']) if items['tops'] else None
+                    return shirt, pant, shoe, top
+    
+    # If no compatible combination is found after checking all
+    return None, None, None, None
+
+# --- MAIN PROGRAM ---
 if __name__ == "__main__":
-    # 1. Load the wardrobe data
     my_wardrobe = load_wardrobe()
+    if not my_wardrobe:
+        exit() # Exit if wardrobe couldn't be loaded
 
-    # 2. Get context from the user
     print("👔 Welcome to your Personal Stylist!")
     occasion_input = input("What is the occasion? (Formal/Casual): ").capitalize()
     weather_input = input("What is the weather? (Hot/Warm/Cold): ").capitalize()
 
-    # 3. Find all possible items that match the context
-    shirts, pants, shoes, tops = find_items(my_wardrobe, occasion_input, weather_input)
+    # Find all items that fit the basic criteria
+    suitable_items = find_items(my_wardrobe, occasion_input, weather_input)
 
-    # 4. Select a random outfit from the suitable items
-    if shirts and pants and shoes:
-        chosen_shirt = random.choice(shirts)
-        chosen_pants = random.choice(pants)
-        chosen_shoe = random.choice(shoes)
-        chosen_top = None
-        if tops:
-            chosen_top = random.choice(tops)
+    # Find a complete, color-coordinated outfit
+    chosen_shirt, chosen_pants, chosen_shoe, chosen_top = find_outfit(suitable_items)
 
-        # 5. Display the suggestion
+    if chosen_shirt:
         print("\n✨ Here is your outfit suggestion:")
         print("---------------------------------")
         if chosen_top:
@@ -67,5 +101,5 @@ if __name__ == "__main__":
         print(f"Shoes:  {chosen_shoe['ItemName']} ({chosen_shoe['Color']})")
         print("---------------------------------")
     else:
-        print("\nSorry, I couldn't find a suitable outfit with your current wardrobe and criteria.")
-        print("Try adding more items to wardrobe.csv or changing the occasion/weather.")
+        print("\nSorry, I couldn't find a color-compatible outfit with your current wardrobe.")
+        print("Try adding more items to wardrobe.csv or creating more flexible color rules.")
