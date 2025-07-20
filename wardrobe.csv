@@ -1,0 +1,12 @@
+ItemName,Type,Color,Style,Pattern,Weather
+MyBlueJeans,Pants,Blue,Casual,Solid,All
+WhiteFormalShirt,Shirt,White,Formal,Solid,Warm
+BlackTrousers,Pants,Black,Formal,Solid,All
+RedPolo,Shirt,Red,Casual,Solid,Warm
+GreySweater,Top,Grey,Casual,Solid,Cold
+BrownBrogues,Shoes,Brown,Formal,Solid,All
+WhiteSneakers,Shoes,White,Casual,Solid,All
+BlackDerbies,Shoes,Black,Formal,Solid,All
+CheckeredCasualShirt,Shirt,Blue,Casual,Checkered,Warm
+KhakiChinos,Pants,Khaki,Casual,Solid,All
+WoolJacket,Top,Navy,Formal,Solid,Cold
