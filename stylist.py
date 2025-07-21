@@ -1,4 +1,3 @@
-import csv
 import random
 
 class Stylist:
@@ -7,50 +6,25 @@ class Stylist:
         'Brown': ['Neutral', 'Blue'], 'Bold': ['Neutral']
     }
 
-    def __init__(self, wardrobe_file="wardrobe.csv"):
-        self.wardrobe = self._load_wardrobe(wardrobe_file)
+    def __init__(self, wardrobe_data):
+        # The wardrobe is now passed in during creation
+        self.wardrobe = wardrobe_data
 
-    def _load_wardrobe(self, filename):
-        """Loads wardrobe data from the specified CSV file."""
-        wardrobe_data = []
-        try:
-            with open(filename, mode='r', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    # Robust check for corrupted rows before processing
-                    if row and row.get('Style') and row.get('MinTemp') and row.get('MaxTemp'):
-                        row['MinTemp'] = int(row['MinTemp'].strip())
-                        row['MaxTemp'] = int(row['MaxTemp'].strip())
-                        wardrobe_data.append(row)
-        except (FileNotFoundError, ValueError) as e:
-            print(f"Error loading wardrobe: {e}")
-            return []
-        return wardrobe_data
-
-    def _is_color_compatible(self, shirt, pants, shoes):
-        shirt_color, pants_color, shoes_color = shirt['ColorFamily'], pants['ColorFamily'], shoes['ColorFamily']
-        if pants_color not in self.COLOR_RULES.get(shirt_color, []): return False
-        if shirt['Style'] == 'Formal' and pants['Color'] == 'Black' and shoes_color == 'Brown': return False
-        if shoes_color not in self.COLOR_RULES.get(pants_color, []): return False
-        return True
-
+    # ... The rest of the methods (_is_color_compatible, get_suggestion) remain exactly the same ...
+    # Make sure to rename the 'Condition' key to 'ConditionType' in get_suggestion
     def get_suggestion(self, occasion, temperature, condition):
         suitable_items = {'shirts': [], 'pants': [], 'shoes': [], 'tops': []}
         for item in self.wardrobe:
-            # Check if the item's condition is 'Any' or matches the current weather
-            is_condition_ok = (item['Condition'] == 'Any' or item['Condition'] == condition)
-            
+            is_condition_ok = (item['ConditionType'] == 'Any' or item['ConditionType'] == condition)
+
             if item['Style'].strip() == occasion and item['MinTemp'] <= temperature <= item['MaxTemp'] and is_condition_ok:
-                item_type_map = {
-                    'shirt': 'shirts', 'pants': 'pants', 'shoes': 'shoes', 'top': 'tops'
-                }
+                item_type_map = { 'shirt': 'shirts', 'pants': 'pants', 'shoes': 'shoes', 'top': 'tops' }
                 item_type = item_type_map.get(item['Type'].lower())
                 if item_type in suitable_items:
                     suitable_items[item_type].append(item)
-        
+
         if not (suitable_items['shirts'] and suitable_items['pants'] and suitable_items['shoes']): return None
-        
-        # ... The rest of the method (shuffle, loops) remains the same ...
+
         random.shuffle(suitable_items['shirts'])
         random.shuffle(suitable_items['pants'])
         random.shuffle(suitable_items['shoes'])
@@ -62,6 +36,13 @@ class Stylist:
                         top = random.choice(suitable_items['tops']) if suitable_items['tops'] else None
                         return {'top': top, 'shirt': shirt, 'pants': pant, 'shoes': shoe}
         return None
+
+    def _is_color_compatible(self, shirt, pants, shoes):
+        shirt_color, pants_color, shoes_color = shirt['ColorFamily'], pants['ColorFamily'], shoes['ColorFamily']
+        if pants_color not in self.COLOR_RULES.get(shirt_color, []): return False
+        if shirt['Style'] == 'Formal' and pants['Color'] == 'Black' and shoes_color == 'Brown': return False
+        if shoes_color not in self.COLOR_RULES.get(pants_color, []): return False
+        return True
 
 # --- Main Program Execution ---
 if __name__ == "__main__":

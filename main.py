@@ -1,51 +1,105 @@
-# main.py - Our FastAPI application
+# main.py
 import requests
 from fastapi import FastAPI, HTTPException
-from stylist import Stylist # We still use our original Stylist class
+from pydantic import BaseModel
+from typing import Optional
 
-# Create an instance of the FastAPI application
+# Import our new database functions and the simplified Stylist
+from database import add_clothing_item, get_wardrobe_by_user
+from stylist import Stylist
+
+# --- Pydantic Models (No changes here) ---
+class ClothingItem(BaseModel):
+    ItemName: str
+    Type: str
+    Color: str
+    Style: str
+
+class Weather(BaseModel):
+    temperature: int
+    condition: str
+
+class OutfitResponse(BaseModel):
+    top: Optional[ClothingItem] = None
+    shirt: ClothingItem
+    pants: ClothingItem
+    shoes: ClothingItem
+    current_weather: Weather
+
+# Add this class to define the incoming data for a new clothing item
+class NewClothingItem(BaseModel):
+    ItemName: str
+    Type: str
+    Color: str
+    ColorFamily: str
+    Style: str
+    Pattern: str
+    MinTemp: int
+    MaxTemp: int
+    ConditionType: str
+
+# Add this class for a simple confirmation message
+class StatusResponse(BaseModel):
+    status: str
+    detail: str
+
+# --- FastAPI App Setup ---
 app = FastAPI()
 
-# Create a single instance of the Stylist
-personal_stylist = Stylist()
-
-# --- Weather API Configuration ---
-WEATHER_API_KEY = "ac058b95d5d3473d9d0ecc0dac09c9ba"  # <-- IMPORTANT: PASTE YOUR KEY HERE
+# --- Weather API Configuration (No changes here) ---
+WEATHER_API_KEY = "ac058b95d5d3473d9d0ecc0dac09c9ba"
 COIMBATORE_LAT = 11.0168
 COIMBATORE_LON = 76.9558
 WEATHER_URL = f"https://api.openweathermap.org/data/2.5/weather?lat={COIMBATORE_LAT}&lon={COIMBATORE_LON}&appid={WEATHER_API_KEY}&units=metric"
 
 def get_current_weather():
-    """Fetches weather from OpenWeatherMap and returns temp and condition."""
     try:
-        # The verify=False fix is still needed here
         response = requests.get(WEATHER_URL, verify=False)
         response.raise_for_status()
         data = response.json()
-        temp = int(data['main']['temp'])
-        condition = data['weather'][0]['main']
-        return temp, condition
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching weather: {e}")
-        return None, None
+        return {"temperature": int(data['main']['temp']), "condition": data['weather'][0]['main']}
+    except requests.exceptions.RequestException:
+        return None
 
-@app.get("/suggest")
-def get_outfit_suggestion(occasion: str):
-    # FastAPI handles missing parameters automatically.
-    # We define 'occasion' as a required string parameter.
+# --- API Endpoints ---
+@app.get("/suggest/{user_id}", response_model=OutfitResponse)
+def suggest_for_user(user_id: int, occasion: str):
+    # 1. Fetch the user's wardrobe from the database
+    wardrobe = get_wardrobe_by_user(user_id)
+    if not wardrobe:
+        raise HTTPException(status_code=404, detail=f"User with ID {user_id} not found or has an empty wardrobe.")
 
-    temp, condition = get_current_weather()
-    if temp is None:
-        raise HTTPException(status_code=500, detail="Could not retrieve current weather data.")
+    # 2. Create a Stylist instance with that user's specific wardrobe
+    personal_stylist = Stylist(wardrobe_data=wardrobe)
 
-    outfit = personal_stylist.get_suggestion(occasion.capitalize(), temp, condition)
+    # 3. Get weather and suggestion (same as before)
+    weather = get_current_weather()
+    if not weather:
+        raise HTTPException(status_code=500, detail="Could not retrieve weather data.")
 
-    if outfit:
-        outfit['current_weather'] = {'temperature': temp, 'condition': condition}
-        return outfit
+    outfit_data = personal_stylist.get_suggestion(occasion.capitalize(), weather['temperature'], weather['condition'])
+
+    if outfit_data:
+        response_data = {**outfit_data, "current_weather": weather}
+        return response_data
     else:
-        raise HTTPException(status_code=404, detail=f"No suitable outfit found for {temp}°C and {condition} conditions.")
+        raise HTTPException(status_code=404, detail="No suitable outfit found.")
+
+@app.post("/wardrobe/{user_id}", response_model=StatusResponse)
+def add_to_wardrobe(user_id: int, item: NewClothingItem):
+    # FastAPI uses the 'item: NewClothingItem' type hint to:
+    # 1. Expect this data in the request body.
+    # 2. Validate the incoming JSON against your Pydantic model.
+    # 3. Convert the JSON into a Python object you can use.
+
+    # Pydantic models can be converted to dicts
+    success, detail = add_clothing_item(user_id, item.dict())
+
+    if not success:
+        raise HTTPException(status_code=400, detail=detail)
+
+    return {"status": "success", "detail": detail}
 
 @app.get("/")
 def read_root():
-    return {"message": "Stylist Backend is running. Go to /docs for the API documentation."}
+    return {"message": "Stylist Backend is running. Go to /docs for API documentation."}
