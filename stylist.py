@@ -34,16 +34,15 @@ class Stylist:
         if shoes_color not in self.COLOR_RULES.get(pants_color, []): return False
         return True
 
-    def get_suggestion(self, occasion, temperature):
+    def get_suggestion(self, occasion, temperature, condition):
         suitable_items = {'shirts': [], 'pants': [], 'shoes': [], 'tops': []}
         for item in self.wardrobe:
-            if item['Style'].strip() == occasion and item['MinTemp'] <= temperature <= item['MaxTemp']:
-                # Your corrected pluralization logic
+            # Check if the item's condition is 'Any' or matches the current weather
+            is_condition_ok = (item['Condition'] == 'Any' or item['Condition'] == condition)
+            
+            if item['Style'].strip() == occasion and item['MinTemp'] <= temperature <= item['MaxTemp'] and is_condition_ok:
                 item_type_map = {
-                    'shirt': 'shirts',
-                    'pants': 'pants',
-                    'shoes': 'shoes',
-                    'top': 'tops'
+                    'shirt': 'shirts', 'pants': 'pants', 'shoes': 'shoes', 'top': 'tops'
                 }
                 item_type = item_type_map.get(item['Type'].lower())
                 if item_type in suitable_items:
@@ -51,6 +50,7 @@ class Stylist:
         
         if not (suitable_items['shirts'] and suitable_items['pants'] and suitable_items['shoes']): return None
         
+        # ... The rest of the method (shuffle, loops) remains the same ...
         random.shuffle(suitable_items['shirts'])
         random.shuffle(suitable_items['pants'])
         random.shuffle(suitable_items['shoes'])

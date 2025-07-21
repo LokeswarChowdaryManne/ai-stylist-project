@@ -1,37 +1,54 @@
+import requests
 from flask import Flask, jsonify, request
-from stylist import Stylist # Import your Stylist class from stylist.py
+from stylist import Stylist
 
-# Create an instance of the Flask application
 app = Flask(__name__)
-
-# Create a single instance of the Stylist when the server starts
 personal_stylist = Stylist()
 
-# Define a "route" for our API endpoint
+# --- Weather API Configuration ---
+WEATHER_API_KEY = "YOUR_API_KEY_HERE"  # <-- IMPORTANT: PASTE YOUR KEY HERE
+COIMBATORE_LAT = 11.0168
+COIMBATORE_LON = 76.9558
+WEATHER_URL = f"https://api.openweathermap.org/data/2.5/weather?lat={COIMBATORE_LAT}&lon={COIMBATORE_LON}&appid={WEATHER_API_KEY}&units=metric"
+
+def get_current_weather():
+    """Fetches weather from OpenWeatherMap and returns temp and condition."""
+    try:
+        response = requests.get(WEATHER_URL, verify=False)
+        response.raise_for_status()  # Raises an exception for bad responses (4xx or 5xx)
+        data = response.json()
+        temp = int(data['main']['temp'])
+        # The main weather condition (e.g., 'Rain', 'Clouds', 'Clear')
+        condition = data['weather'][0]['main']
+        return temp, condition
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching weather: {e}")
+        return None, None
+
 @app.route("/suggest")
 def get_outfit_suggestion():
-    # Get parameters from the URL (e.g., ?occasion=Formal&temp=25)
+    # Input is now only the occasion
     occasion = request.args.get('occasion', type=str)
-    temp = request.args.get('temp', type=int)
+    if not occasion:
+        return jsonify({"error": "Missing required parameter: occasion"}), 400
 
-    # Basic validation
-    if not occasion or temp is None:
-        return jsonify({"error": "Missing required parameters: occasion and temp"}), 400
+    # Get weather automatically
+    temp, condition = get_current_weather()
+    if temp is None:
+        return jsonify({"error": "Could not retrieve current weather data."}), 500
+    
+    outfit = personal_stylist.get_suggestion(occasion.capitalize(), temp, condition)
 
-    # Use our Stylist class to get an outfit
-    outfit = personal_stylist.get_suggestion(occasion.capitalize(), temp)
-
-    # Return the outfit as a JSON response
     if outfit:
+        # Include current weather in the response
+        outfit['current_weather'] = {'temperature': temp, 'condition': condition}
         return jsonify(outfit)
     else:
-        return jsonify({"message": "No suitable outfit found."}), 404
+        return jsonify({"message": f"No suitable outfit found for {temp}°C and {condition} conditions."}), 404
 
-# You can keep the old hello_world route for basic testing
 @app.route("/")
 def hello_world():
-    return "<h1>Stylist Backend is running. Use the /suggest endpoint.</h1>"
+    return "<h1>Stylist Backend is running.</h1>"
 
-# This allows us to run the server by executing this file
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
