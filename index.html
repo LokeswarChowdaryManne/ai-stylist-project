@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stylist</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-color: #f0f2f5;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        h1 {
+            color: #1c1e21;
+        }
+        button {
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #166fe5;
+        }
+        #outfit-result {
+            margin-top: 30px;
+            text-align: left;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .item {
+            background-color: #e7f3ff;
+            border-left: 4px solid #1877f2;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>AI Stylist</h1>
+        <button id="suggestBtn">Suggest an Outfit</button>
+        <div id="outfit-result">
+            </div>
+    </div>
+
+    <script>
+        // Find the button and the result div in the HTML
+        const suggestButton = document.getElementById('suggestBtn');
+        const resultDiv = document.getElementById('outfit-result');
+
+        // This function will be called when the button is clicked
+        async function getSuggestion() {
+            // Clear previous results and show loading text
+            resultDiv.innerHTML = '<p>Getting suggestion...</p>';
+
+            // Define the user ID and occasion
+            const userId = 1;
+            const occasion = 'Casual';
+            const apiUrl = `http://127.0.0.1:8000/suggest/${userId}?occasion=${occasion}`;
+
+            try {
+                // Use the 'fetch' API to call our FastAPI backend
+                const response = await fetch(apiUrl);
+
+                // Check if the request was successful
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to get suggestion');
+                }
+
+                const data = await response.json();
+
+                // Build the HTML to display the outfit
+                let outfitHtml = `
+                    <p>Weather: ${data.current_weather.temperature}°C, ${data.current_weather.condition}</p>
+                    <div class="item"><strong>Shirt:</strong> ${data.shirt.ItemName} (${data.shirt.Color})</div>
+                    <div class="item"><strong>Pants:</strong> ${data.pants.ItemName} (${data.pants.Color})</div>
+                    <div class="item"><strong>Shoes:</strong> ${data.shoes.ItemName} (${data.shoes.Color})</div>
+                `;
+
+                // Add the top layer if it exists
+                if (data.top) {
+                    outfitHtml += `<div class="item"><strong>Top:</strong> ${data.top.ItemName} (${data.top.Color})</div>`;
+                }
+
+                // Update the page with the new HTML
+                resultDiv.innerHTML = outfitHtml;
+
+            } catch (error) {
+                // If an error occurs, display it
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Attach the function to the button's 'click' event
+        suggestButton.addEventListener('click', getSuggestion);
+    </script>
+
+</body>
+</html>
