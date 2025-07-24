@@ -1,10 +1,9 @@
 import requests
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware # Import the CORS middleware
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
-# Import your custom modules
 from database import get_wardrobe_by_user, add_clothing_item, delete_clothing_item
 from stylist import Stylist
 
@@ -12,15 +11,14 @@ from stylist import Stylist
 app = FastAPI()
 
 # --- CORS Middleware Configuration ---
-# This fixes the "Failed to fetch" error from the browser.
-origins = ["*"] # Allow all origins
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"], # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"], # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Pydantic Models ---
@@ -57,7 +55,7 @@ class StatusResponse(BaseModel):
     detail: str
 
 # --- Weather API Configuration ---
-WEATHER_API_KEY = "ac058b95d5d3473d9d0ecc0dac09c9ba"
+WEATHER_API_KEY = "YOUR_API_KEY_HERE"
 COIMBATORE_LAT = 11.0168
 COIMBATORE_LON = 76.9558
 WEATHER_URL = f"https://api.openweathermap.org/data/2.5/weather?lat={COIMBATORE_LAT}&lon={COIMBATORE_LON}&appid={WEATHER_API_KEY}&units=metric"
@@ -78,19 +76,17 @@ def read_root():
 
 @app.get("/suggest/{user_id}", response_model=OutfitResponse)
 def suggest_for_user(user_id: int, occasion: str):
-    # --- This is the key change ---
-    # 1. Fetch weather first and check for failure immediately
     weather = get_current_weather()
     if not weather:
         raise HTTPException(status_code=503, detail="Weather service is currently unavailable.")
 
-    # 2. Fetch wardrobe
     wardrobe = get_wardrobe_by_user(user_id)
     if not wardrobe:
         raise HTTPException(status_code=404, detail=f"User with ID {user_id} not found.")
 
-    # 3. Create stylist and get suggestion
-    personal_stylist = Stylist(wardrobe_data=wardrobe)
+    # Pass user_id to the Stylist for caching purposes
+    personal_stylist = Stylist(wardrobe_data=wardrobe, user_id=user_id)
+    
     outfit_data = personal_stylist.get_suggestion(occasion.capitalize(), weather['temperature'], weather['condition'])
 
     if outfit_data:
