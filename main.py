@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 # Import our new database functions and the simplified Stylist
-from database import add_clothing_item, get_wardrobe_by_user
+from database import add_clothing_item, delete_clothing_item, get_wardrobe_by_user
 from stylist import Stylist
 
 # --- Pydantic Models (No changes here) ---
@@ -97,6 +97,17 @@ def add_to_wardrobe(user_id: int, item: NewClothingItem):
 
     if not success:
         raise HTTPException(status_code=400, detail=detail)
+
+    return {"status": "success", "detail": detail}
+
+@app.delete("/wardrobe/{user_id}/{item_id}", response_model=StatusResponse)
+def delete_from_wardrobe(user_id: int, item_id: int):
+    # The user_id and item_id are both path parameters.
+    success, detail = delete_clothing_item(user_id, item_id)
+
+    if not success:
+        # If the item wasn't found, we return a 404 error.
+        raise HTTPException(status_code=404, detail=detail)
 
     return {"status": "success", "detail": detail}
 
