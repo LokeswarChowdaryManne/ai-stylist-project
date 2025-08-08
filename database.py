@@ -1,7 +1,20 @@
+import os
+from dotenv import load_dotenv
 import mysql.connector
 from mysql.connector import pooling, Error
 
-DB_CONFIG = { 'host': 'localhost', 'database': 'stylist_db', 'user': 'root', 'password': '1234' }
+# Load environment variables from .env file
+load_dotenv()
+
+DB_CONFIG = {
+    'host': 'localhost',
+    'database': 'stylist_db',
+    'user': 'root',
+    # Read the password from the environment variables
+    'password': os.getenv("DB_PASSWORD")
+}
+
+# (The rest of the database.py file remains exactly the same)
 connection_pool = None
 try:
     connection_pool = pooling.MySQLConnectionPool(pool_name="stylist_pool", pool_size=5, **DB_CONFIG)

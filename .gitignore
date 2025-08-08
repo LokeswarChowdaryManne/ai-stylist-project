@@ -13,3 +13,5 @@ virt1/
 *.pth
 
 uploads/
+
+.env
