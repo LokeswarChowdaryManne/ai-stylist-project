@@ -99,7 +99,7 @@ def suggest_for_user(user_id: int, occasion: str):
     if not wardrobe: raise HTTPException(status_code=404, detail=f"User with ID {user_id} not found.")
     wardrobe_with_images = [item for item in wardrobe if item.get('ImagePath') and os.path.exists(item['ImagePath'])]
     if not wardrobe_with_images: raise HTTPException(status_code=404, detail="User wardrobe has no items with valid images.")
-    personal_stylist = Stylist(wardrobe_data=wardrobe_with_images)
+    personal_stylist = Stylist(wardrobe_data=wardrobe_with_images, ai_engine=ai_engine)
     outfit_data = personal_stylist.get_suggestion(occasion.capitalize(), weather['temperature'], weather['condition'])
     if outfit_data:
         response_data = {**outfit_data, "current_weather": weather}
@@ -109,8 +109,13 @@ def suggest_for_user(user_id: int, occasion: str):
 
 @app.delete("/wardrobe/{user_id}/{item_id}", response_model=StatusResponse)
 def delete_from_wardrobe(user_id: int, item_id: int):
+    # The item_id here refers to the ID in the base_items table
     success, detail = delete_clothing_item(user_id, item_id)
     if not success:
         raise HTTPException(status_code=404, detail=detail)
+
+    # We don't need to clear the main AI embedding cache, just the user's
+    # For simplicity in this version, we'll keep clearing it.
     clear_user_cache(user_id)
+
     return {"status": "success", "detail": detail}
