@@ -9,3 +9,5 @@ processed_images/
 
 # Ignore Python's virtual environment folder
 virt1/
+
+*.pth
