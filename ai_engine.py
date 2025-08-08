@@ -43,28 +43,3 @@ class InferenceEngine:
             embedding = self.model.forward_one(image_tensor)
 
         return embedding.cpu().numpy()
-
-# --- Test the Inference Engine ---
-if __name__ == "__main__":
-    engine = InferenceEngine()
-
-    # Get a list of all processed images
-    all_images = [os.path.join(InferenceConfig.PROCESSED_DATA_DIR, f) 
-                  for f in os.listdir(InferenceConfig.PROCESSED_DATA_DIR) if f.endswith('.jpg')]
-
-    # Pick two random images to compare
-    image_path_1, image_path_2 = random.sample(all_images, 2)
-    print(f"\nComparing images:")
-    print(f"  - Image 1: {os.path.basename(image_path_1)}")
-    print(f"  - Image 2: {os.path.basename(image_path_2)}")
-
-    # Generate embeddings for both
-    embedding1 = engine.get_embedding(image_path_1)
-    embedding2 = engine.get_embedding(image_path_2)
-
-    # Calculate similarity
-    similarity = cosine_similarity(embedding1, embedding2)[0][0]
-
-    print(f"\nStyle Similarity Score: {similarity:.4f}")
-
-    # You can try this with items you know are from the same outfit to see if the score is higher

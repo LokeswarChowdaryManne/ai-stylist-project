@@ -70,31 +70,3 @@ class OutfitPairsDataset(Dataset):
             pair_img = self.transform(pair_img)
 
         return anchor_img, pair_img, torch.tensor(label, dtype=torch.float32)
-
-# --- 3. A Small Test to See it in Action ---
-if __name__ == "__main__":
-    data_transforms = transforms.Compose([
-        transforms.Resize(Config.IMAGE_SIZE),
-        transforms.ToTensor()
-    ])
-    outfit_dataset = OutfitPairsDataset(
-        root_dir=Config.PROCESSED_DATA_DIR,
-        items_per_outfit=Config.ITEMS_PER_OUTFIT,
-        transform=data_transforms
-    )
-    print("\nFetching one sample from the dataset...")
-    anchor, pair, label = outfit_dataset[0]
-    print(f"Sample fetched. Label: {'Positive (match)' if label.item() == 1.0 else 'Negative (mismatch)'}")
-    
-    def show_images(anchor_img, pair_img, title):
-        fig, axs = plt.subplots(1, 2, figsize=(8, 4))
-        axs[0].imshow(anchor_img.permute(1, 2, 0))
-        axs[0].set_title("Anchor Image")
-        axs[0].axis('off')
-        axs[1].imshow(pair_img.permute(1, 2, 0))
-        axs[1].set_title("Paired Image")
-        axs[1].axis('off')
-        fig.suptitle(title)
-        plt.show()
-
-    show_images(anchor, pair, f"Label: {'MATCH' if label.item() == 1.0 else 'MISMATCH'}")

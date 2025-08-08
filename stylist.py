@@ -1,6 +1,5 @@
 # stylist.py - Final version using custom trained model
 import random
-from sklearn.metrics.pairwise import cosine_similarity
 
 class Stylist:
     def __init__(self, wardrobe_data, ai_engine):
