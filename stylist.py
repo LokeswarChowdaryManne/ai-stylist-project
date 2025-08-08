@@ -13,7 +13,10 @@ class Stylist:
         print("Generating embeddings for user's wardrobe...")
         image_paths = [item['ImagePath'] for item in self.wardrobe]
         embeddings = [self.ai_engine.get_embedding(path) for path in image_paths]
-        return embeddings
+        # Filter out None values in case an image failed to process
+        self.wardrobe = [item for i, item in enumerate(self.wardrobe) if embeddings[i] is not None]
+        valid_embeddings = [emb for emb in embeddings if emb is not None]
+        return valid_embeddings
 
     def get_suggestion(self, occasion, temperature, condition):
         suitable_items = {'shirts': [], 'pants': [], 'shoes': [], 'tops': []}
