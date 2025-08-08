@@ -55,17 +55,25 @@ def get_wardrobe_by_user(user_id: int):
             cursor.close()
             conn.close()
 
-def add_clothing_item(user_id: int, item: dict):
+def add_clothing_item(user_id: int, item: dict, image_path: str):
+    """Inserts a new clothing item, including its image file path."""
     conn = get_db_connection()
-    if conn is None: return False, "Database connection failed"
+    if conn is None:
+        return False, "Database connection failed"
+
     cursor = conn.cursor()
     query = """
         INSERT INTO clothing_items 
-        (user_id, ItemName, Type, Color, ColorFamily, Style, Pattern, MinTemp, MaxTemp, ConditionType) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        (user_id, ItemName, Type, Color, ColorFamily, Style, Pattern, MinTemp, MaxTemp, ConditionType, ImagePath) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
-    values = (user_id, item['ItemName'], item['Type'], item['Color'], item['ColorFamily'], item['Style'],
-              item['Pattern'], item['MinTemp'], item['MaxTemp'], item['ConditionType'])
+
+    values = (
+        user_id, item['ItemName'], item['Type'], item['Color'], item['ColorFamily'],
+        item['Style'], item['Pattern'], item['MinTemp'], item['MaxTemp'],
+        item['ConditionType'], image_path
+    )
+
     try:
         cursor.execute(query, values)
         conn.commit()
@@ -74,7 +82,7 @@ def add_clothing_item(user_id: int, item: dict):
         conn.rollback()
         return False, str(e)
     finally:
-        if conn and conn.is_connected():
+        if conn.is_connected():
             cursor.close()
             conn.close()
 

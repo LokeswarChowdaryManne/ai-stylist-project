@@ -5,117 +5,238 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Stylist</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            background-color: #f0f2f5;
-            margin: 0;
-            min-height: 100vh;
-        }
-        .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-        }
-        h1 {
-            color: #1c1e21;
-        }
-        button {
-            background-color: #1877f2;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #166fe5;
-        }
-        #outfit-result {
-            margin-top: 30px;
-            text-align: left;
-            border-top: 1px solid #ddd;
-            padding-top: 20px;
-        }
-        .item {
-            background-color: #e7f3ff;
-            border-left: 4px solid #1877f2;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: #f0f2f5; margin: 20px; }
+        .container { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 90%; max-width: 500px; margin-bottom: 20px; }
+        h1, h2 { color: #1c1e21; text-align: center; }
+        button { background-color: #1877f2; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; width: 100%; margin-top: 10px; }
+        button:hover { background-color: #166fe5; }
+        button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+        #outfit-result, #upload-section { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+        .item { background-color: #e7f3ff; border-left: 4px solid #1877f2; padding: 10px; margin-bottom: 8px; border-radius: 4px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-field { display: flex; flex-direction: column; text-align: left; }
+        label { font-weight: 600; color: #606770; margin-bottom: 5px; font-size: 14px; }
+        input[type="text"], input[type="number"], input[type="file"], select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        #preview-container { margin-top: 15px; text-align: center; }
+        #preview-image { max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #ddd; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>AI Stylist</h1>
-        <button id="suggestBtn">Suggest an Outfit</button>
-        <div id="outfit-result">
+        <button id="suggestBtn">Suggest a Casual Outfit for User 1</button>
+        <div id="outfit-result"></div>
+    </div>
+
+    <div class="container">
+        <h2>Add to Wardrobe</h2>
+        <div id="upload-section">
+            <div class="form-field">
+                <label for="image-upload">Upload Your Clothing Image</label>
+                <input type="file" id="image-upload" accept="image/*">
             </div>
+
+            <div id="preview-container" class="hidden">
+                <img id="preview-image" src="#" alt="Image Preview"/>
+            </div>
+
+            <form id="verify-form" class="hidden">
+                <hr style="margin: 20px 0;">
+                <h3>Verify AI Tags</h3>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="ItemName">Item Name</label>
+                        <input type="text" id="ItemName" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="Type">Type</label>
+                        <input type="text" id="Type" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="Color">Color</label>
+                        <input type="text" id="Color" required>
+                    </div>
+                     <div class="form-field">
+                        <label for="ColorFamily">Color Family</label>
+                        <input type="text" id="ColorFamily" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="Style">Style</label>
+                        <input type="text" id="Style" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="Pattern">Pattern</label>
+                        <input type="text" id="Pattern" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="MinTemp">Min Temp (°C)</label>
+                        <input type="number" id="MinTemp" value="15" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="MaxTemp">Max Temp (°C)</label>
+                        <input type="number" id="MaxTemp" value="30" required>
+                    </div>
+                </div>
+                 <div class="form-field" style="margin-top:15px;">
+                    <label for="ConditionType">Condition</label>
+                    <select id="ConditionType">
+                        <option>Any</option>
+                        <option>Clear</option>
+                        <option>Clouds</option>
+                        <option>Rain</option>
+                    </select>
+                </div>
+                <button type="submit" id="submit-item-btn">Approve and Add Item</button>
+            </form>
+            <div id="upload-status"></div>
+        </div>
     </div>
 
     <script>
-        // Find the button and the result div in the HTML
+        // --- Suggestion Logic (same as before) ---
         const suggestButton = document.getElementById('suggestBtn');
         const resultDiv = document.getElementById('outfit-result');
+        suggestButton.addEventListener('click', getSuggestion);
 
-        // This function will be called when the button is clicked
         async function getSuggestion() {
-            // Clear previous results and show loading text
             resultDiv.innerHTML = '<p>Getting suggestion...</p>';
-
-            // Define the user ID and occasion
             const userId = 1;
             const occasion = 'Casual';
             const apiUrl = `http://127.0.0.1:8000/suggest/${userId}?occasion=${occasion}`;
-
             try {
-                // Use the 'fetch' API to call our FastAPI backend
                 const response = await fetch(apiUrl);
-
-                // Check if the request was successful
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.detail || 'Failed to get suggestion');
                 }
-
                 const data = await response.json();
-
-                // Build the HTML to display the outfit
-                let outfitHtml = `
-                    <p>Weather: ${data.current_weather.temperature}°C, ${data.current_weather.condition}</p>
+                let outfitHtml = `<p>Weather: ${data.current_weather.temperature}°C, ${data.current_weather.condition}</p>
                     <div class="item"><strong>Shirt:</strong> ${data.shirt.ItemName} (${data.shirt.Color})</div>
                     <div class="item"><strong>Pants:</strong> ${data.pants.ItemName} (${data.pants.Color})</div>
-                    <div class="item"><strong>Shoes:</strong> ${data.shoes.ItemName} (${data.shoes.Color})</div>
-                `;
-
-                // Add the top layer if it exists
+                    <div class="item"><strong>Shoes:</strong> ${data.shoes.ItemName} (${data.shoes.Color})</div>`;
                 if (data.top) {
                     outfitHtml += `<div class="item"><strong>Top:</strong> ${data.top.ItemName} (${data.top.Color})</div>`;
                 }
-
-                // Update the page with the new HTML
                 resultDiv.innerHTML = outfitHtml;
-
             } catch (error) {
-                // If an error occurs, display it
                 resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
             }
         }
 
-        // Attach the function to the button's 'click' event
-        suggestButton.addEventListener('click', getSuggestion);
-    </script>
+        // --- New Upload & Verify Logic ---
+        const imageUpload = document.getElementById('image-upload');
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+        const verifyForm = document.getElementById('verify-form');
+        const uploadStatus = document.getElementById('upload-status');
+        const submitBtn = document.getElementById('submit-item-btn');
 
+        let uploadedFile = null;
+
+        imageUpload.addEventListener('change', (event) => {
+            uploadedFile = event.target.files[0];
+            if (uploadedFile) {
+                previewImage.src = URL.createObjectURL(uploadedFile);
+                previewContainer.classList.remove('hidden');
+                verifyForm.classList.remove('hidden');
+                autoTagImage(uploadedFile);
+            }
+        });
+
+        async function autoTagImage(file) {
+            uploadStatus.innerHTML = '<p>AI is analyzing your image...</p>';
+            submitBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // This endpoint doesn't exist yet, we will create it.
+                // For now, we will simulate the AI response.
+                // In a real app: const response = await fetch('http://127.0.0.1:8000/autotag', { method: 'POST', body: formData });
+                // const tags = await response.json();
+
+                // We will use our existing upload endpoint that does it all in one
+                const userId = 1;
+                const response = await fetch(`http://127.0.0.1:8000/wardrobe/${userId}/upload-and-tag`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                     const errorData = await response.json();
+                     throw new Error(errorData.detail || 'Failed to auto-tag');
+                }
+
+                const result = await response.json();
+                const tags = result.tags;
+
+                // Populate the form with AI suggestions
+                document.getElementById('ItemName').value = tags.ItemName;
+                document.getElementById('Type').value = tags.Type;
+                document.getElementById('Color').value = tags.Color;
+                document.getElementById('ColorFamily').value = tags.ColorFamily;
+                document.getElementById('Style').value = tags.Style;
+                document.getElementById('Pattern').value = tags.Pattern;
+
+                uploadStatus.innerHTML = '<p style="color: green;">AI analysis complete. Please verify the details below.</p>';
+
+            } catch(error) {
+                uploadStatus.innerHTML = `<p style="color: red;">Error during AI analysis: ${error.message}</p>`;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        verifyForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            submitBtn.disabled = true;
+            uploadStatus.innerHTML = '<p>Adding item to wardrobe...</p>';
+
+            // We will create this new endpoint to add an already-tagged item
+            const userId = 1;
+            const finalItemData = {
+                ItemName: document.getElementById('ItemName').value,
+                Type: document.getElementById('Type').value,
+                Color: document.getElementById('Color').value,
+                ColorFamily: document.getElementById('ColorFamily').value,
+                Style: document.getElementById('Style').value,
+                Pattern: document.getElementById('Pattern').value,
+                MinTemp: parseInt(document.getElementById('MinTemp').value),
+                MaxTemp: parseInt(document.getElementById('MaxTemp').value),
+                ConditionType: document.getElementById('ConditionType').value,
+            };
+
+            const formData = new FormData();
+            formData.append('file', uploadedFile);
+            formData.append('item_data', JSON.stringify(finalItemData));
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/wardrobe/${userId}/add-verified`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                     const errorData = await response.json();
+                     throw new Error(errorData.detail || 'Failed to add item');
+                }
+
+                const result = await response.json();
+                uploadStatus.innerHTML = `<p style="color: green;">${result.detail}</p>`;
+                verifyForm.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+                imageUpload.value = '';
+
+            } catch(error) {
+                uploadStatus.innerHTML = `<p style="color: red;">Error adding item: ${error.message}</p>`;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+    </script>
 </body>
 </html>

@@ -11,3 +11,5 @@ processed_images/
 virt1/
 
 *.pth
+
+uploads/

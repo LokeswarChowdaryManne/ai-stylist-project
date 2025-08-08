@@ -1,9 +1,0 @@
-ItemName,Type,Color,ColorFamily,Style,Pattern,MinTemp,MaxTemp,Condition
-WhiteFormalShirt,Shirt,White,Neutral,Formal,Solid,15,35,Any
-BlackPolo,Shirt,Black,Neutral,Casual,Solid,20,35,Any
-NavyTrousers,Pants,Navy,Blue,Formal,Solid,10,30,Any
-LightWashJeans,Pants,Blue,Blue,Casual,Solid,0,30,Any
-LeatherJacket,Top,Black,Neutral,Casual,Solid,5,20,Any
-BrownLoafers,Shoes,Brown,Brown,Formal,Solid,15,35,Any
-BlackSneakers,Shoes,Black,Neutral,Casual,Solid,10,40,Any
-RainJacket,Top,Yellow,Bold,Casual,Solid,15,30,Rain
